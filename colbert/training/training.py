@@ -40,7 +40,7 @@ def train(args):
     if args.rank not in [-1, 0]:
         torch.distributed.barrier()
 
-    colbert = MODEL_MAP[args.model].from_pretrained(args.model,
+    colbert = MODEL_MAP[args.modelname].from_pretrained(args.modelname,
                                       query_maxlen=args.query_maxlen,
                                       doc_maxlen=args.doc_maxlen,
                                       dim=args.dim,
@@ -59,7 +59,6 @@ def train(args):
 
     colbert = colbert.to(DEVICE)
     colbert.train()
-
     if args.distributed:
         colbert = torch.nn.parallel.DistributedDataParallel(colbert, device_ids=[args.rank],
                                                             output_device=args.rank,

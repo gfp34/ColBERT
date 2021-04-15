@@ -5,10 +5,6 @@ import torch.nn as nn
 from transformers import BertPreTrainedModel, BertModel, BertTokenizerFast
 from colbert.parameters import DEVICE
 
-MODEL_MAP={
-    'bert-base-uncased' : ColBERT,
-    'roberta-base' : ColRoberta,
-    }
 
 class ColBERT(BertPreTrainedModel):
     def __init__(self, config, query_maxlen, doc_maxlen, mask_punctuation, dim=128, similarity_metric='cosine'):
@@ -109,9 +105,10 @@ class ColBERTMixIn():
         mask = [[(x not in self.skiplist) and (x != 0) for x in d] for d in input_ids.cpu().tolist()]
         return mask
 
-from transformers import RobertaForSequenceClassification, RobertaConfig, RobertaModel, RobertaTokenizerFast
+from transformers import RobertaConfig, RobertaModel, RobertaTokenizerFast
+from transformers.modeling_roberta import RobertaPreTrainedModel
 
-class ColRoberta(RobertaForSequenceClassification, ColBERTMixIn):
+class ColRoberta(ColBERTMixIn, RobertaModel):
     def __init__(self, config, query_maxlen, doc_maxlen, mask_punctuation, dim=128, similarity_metric='cosine'):
         super(ColRoberta, self).__init__(config)
         self.query_maxlen = query_maxlen
@@ -127,3 +124,13 @@ class ColRoberta(RobertaForSequenceClassification, ColBERTMixIn):
                              for symbol in string.punctuation
                              for w in [symbol, self.tokenizer.encode(symbol, add_special_tokens=False)[0]]}
 
+        self.bert = RobertaModel(config)
+        self.linear = nn.Linear(config.hidden_size, dim, bias=False)
+
+        self.init_weights()
+
+
+MODEL_MAP={
+    'bert-base-uncased' : ColBERT,
+    'roberta-base' : ColRoberta,
+    }
