@@ -12,8 +12,13 @@ class ModelInference():
         assert colbert.training is False
 
         self.colbert = colbert
-        self.query_tokenizer = QueryTokenizer(colbert.query_maxlen)
-        self.doc_tokenizer = DocTokenizer(colbert.doc_maxlen)
+
+        # reuse the tokenizer from the model
+        tok = None
+        if hasattr(colbert, 'tokenizer'):
+            tok = getattr(colbert, 'tokenizer')
+        self.query_tokenizer = QueryTokenizer(colbert.query_maxlen, tok=tok)
+        self.doc_tokenizer = DocTokenizer(colbert.doc_maxlen, tok=tok)
 
         self.amp_manager = MixedPrecisionManager(amp)
 
