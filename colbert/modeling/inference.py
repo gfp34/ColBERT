@@ -69,9 +69,6 @@ class ModelInference():
             D = [d for batch in batches for d in batch]
             #print("lenD = %d " % len(D))
             if with_ids:
-                #the masking code assumes that args.mask_punctuation is false.
-                assert len(self.colbert.skiplist) == 0
-
                 D_i = [ d[(mask > 0) & (d != 0)] for input_ids, attention_masks in batch_ids for d, mask in zip(input_ids,attention_masks) ]
 
                 if DEBUG:
