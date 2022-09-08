@@ -70,6 +70,9 @@ class ModelInference():
             #print("lenD = %d " % len(D))
             if with_ids:
                 D_i = [ d[(mask > 0) & (d != 0)] for input_ids, attention_masks in batch_ids for d, mask in zip(input_ids,attention_masks) ]
+                # remove skiplist tokens from ids
+                if len(self.colbert.skiplist) > 0:
+                    D_i = [d[[token not in self.colbert.skiplist for token in d.tolist()]] for d in D_i]
 
                 if DEBUG:
                     docid=-1
