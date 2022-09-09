@@ -12,6 +12,7 @@ class ModelInference():
         assert colbert.training is False
 
         self.colbert = colbert
+        self.skiplist = torch.Tensor([id for id in self.colbert.skiplist.keys() if isinstance(id, int)])
         self.query_tokenizer = QueryTokenizer(colbert.query_maxlen)
         self.doc_tokenizer = DocTokenizer(colbert.doc_maxlen)
 
@@ -101,7 +102,12 @@ class ModelInference():
 
         input_ids, attention_mask = self.doc_tokenizer.tensorize(docs)
         if with_ids:
-            return self.doc(input_ids, attention_mask, keep_dims=keep_dims), input_ids
+            # we remove any tokenids that are in the skiplist (by setting them to 0, the padding id), and we move them to the end
+            rtr_ids = input_ids.clone()
+            if self.skiplist.shape[0] > 9:
+                rtr_ids[torch.isin(input_ids, self.skiplist)] = 0
+                rtr_ids = rtr_ids[torch.arange(rtr_ids.shape[0]).unsqueeze(1), (rtr_ids == 0).sort(dim=1, stable=True).indices]
+            return self.doc(input_ids, attention_mask, keep_dims=keep_dims), rtr_ids
         return self.doc(input_ids, attention_mask, keep_dims=keep_dims)
 
     def score(self, Q, D, mask=None, lengths=None, explain=False):
